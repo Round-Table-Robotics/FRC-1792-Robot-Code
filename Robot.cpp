@@ -18,7 +18,7 @@ public:
 	Robot() :
 	myRobot(0,1),
 	stick(5),
-	xbox(1),
+	xbox(0),
 	lw(LiveWindow::GetInstance()),
 
 	speed(0)
