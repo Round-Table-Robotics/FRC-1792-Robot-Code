@@ -1,9 +1,10 @@
-
+#include "SPI.h"
+//#include "Pixy.h"
 #include "WPILib.h"
 
 class Robot: public IterativeRobot
 {
-
+	//Pixy pixy;
 	RobotDrive myRobot; // robot drive system
 	Joystick stick,xbox; // only joystick
 	LiveWindow *lw;
@@ -21,7 +22,7 @@ class Robot: public IterativeRobot
 	float gyrorate;
 	float xvalue;
 	float yvalue;
-	float speed;
+	float speed,turnspeed;
 	float motorspeed,DefToShoot;
 	float cir;
 	int Auto,ang;
@@ -65,7 +66,8 @@ public:
 		gyrorate(0),	//Test Gyro Value
 		xvalue(0),		//Variable to isolate joystick X
 		yvalue(0),		//Variable to isolate joystick Y
-		speed(0),
+		speed(0.70),
+		turnspeed(0),
 		motorspeed(0),	//Variable to isolate speed of motor for turning
 		DefToShoot(54),
 		cir(25.13274123),//Circumference of wheels
@@ -116,73 +118,73 @@ private:
 		SmartDashboard::PutNumber("AutoThing",autoLoopCounter);
 		while(autoLoopCounter==0)	//This Line Jon!!! 0 = on, 7 = off
 		{
-			clock.Reset();
-			clock.Start();
-		while(!clock.HasPeriodPassed(2))
-		{
-			myRobot.ArcadeDrive(1.0,0);
-		}
-/*
-		if((Auto==1)||(Auto==2))	//Are we turning Right?
+				clock.Reset();
+				clock.Start();
+			while(!clock.HasPeriodPassed(2))
 			{
-				while(gyro.GetAngle()<ang)	//Go until we surpass 90deg
+				myRobot.ArcadeDrive(1.0,0);
+			}
+	/*
+			if((Auto==1)||(Auto==2))	//Are we turning Right?
 				{
-					//Turn Distance from 90deg into value robot can read
+					while(gyro.GetAngle()<ang)	//Go until we surpass 90deg
+					{
+						//Turn Distance from 90deg into value robot can read
+						motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
+						//Make motors drive in a way to utilize value
+						myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+					}
+				}
+			if((Auto==3)||(Auto==4))	//Are we turning Left?
+			{
+				while(gyro.GetAngle()>ang)	//Go until we surpass -90deg
+				{
+					//Turn distance from -90deg
 					motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
-					//Make motors drive in a way to utilize value
+					//Make motors drive in a way to utilize new value
 					myRobot.TankDrive(motorspeed/-2,motorspeed/2);
 				}
 			}
-		if((Auto==3)||(Auto==4))	//Are we turning Left?
-		{
-			while(gyro.GetAngle()>ang)	//Go until we surpass -90deg
+			//Reset Encoder to 0
+			EncDist.Reset();
+			//Have we gone the distance
+			while(EncDist.GetDistance()<EncVal1)
 			{
-				//Turn distance from -90deg
-				motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
-				//Make motors drive in a way to utilize new value
-				myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+				//Drive forward
+				myRobot.Drive(-0.5, 0.0);
 			}
-		}
-		//Reset Encoder to 0
-		EncDist.Reset();
-		//Have we gone the distance
-		while(EncDist.GetDistance()<EncVal1)
-		{
-			//Drive forward
-			myRobot.Drive(-0.5, 0.0);
-		}
-		//If we turned right, turn left now/right,turn left
-		ang = -ang;
-		//Same as above
-		if((Auto==1)||(Auto==2))
-		{
-			while(gyro.GetAngle()<ang)
+			//If we turned right, turn left now/right,turn left
+			ang = -ang;
+			//Same as above
+			if((Auto==1)||(Auto==2))
 			{
-				motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
-				myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+				while(gyro.GetAngle()<ang)
+				{
+					motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
+					myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+				}
 			}
-		}
-		if((Auto==3)||(Auto==4))
-		{
-			while(gyro.GetAngle()>ang)
+			if((Auto==3)||(Auto==4))
 			{
-				motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
-				myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+				while(gyro.GetAngle()>ang)
+				{
+					motorspeed=(1/90)*abs(gyro.GetAngle()-ang);
+					myRobot.TankDrive(motorspeed/-2,motorspeed/2);
+				}
 			}
-		}
-		launcherl.Set(1.0);		//Start left launcher motor
-		launcherr.Set(-1.0);	//Start Right Launcher Motor
-		//sonic.SetAutomaticMode(true);
-		//while(sonic.GetRangeInches()>DefToShoot)	//Until we hit the step
-		{
-			//Drive Forward
-		//	myRobot.Drive(-0.5,0.0);
-		}*/
-		//Stop Driving
-		myRobot.Drive(0.0,0.0);
-		//Feed ball into Launcher
-		//intake.Set(1.0);
-		autoLoopCounter=1;		//Stop Autonomous
+			launcherl.Set(1.0);		//Start left launcher motor
+			launcherr.Set(-1.0);	//Start Right Launcher Motor
+			//sonic.SetAutomaticMode(true);
+			//while(sonic.GetRangeInches()>DefToShoot)	//Until we hit the step
+			{
+				//Drive Forward
+			//	myRobot.Drive(-0.5,0.0);
+			}*/
+			//Stop Driving
+			myRobot.Drive(0.0,0.0);
+			//Feed ball into Launcher
+			//intake.Set(1.0);
+			autoLoopCounter=1;		//Stop Autonomous
 		}
 	}
 
@@ -200,7 +202,8 @@ private:
 
 	void TeleopPeriodic()	//Teleoperated Begins
 	{
-		/*if(stick.GetRawButton(3))	//Push->Move Climber Down
+		/*
+		if(stick.GetRawButton(3))	//Push->Move Climber Down
 		{
 			sm2kl.Set(1.0);
 			sm2kr.Set(1.0);
@@ -241,6 +244,7 @@ private:
 		xvalue = -stick.GetZ()*.75;
 		//Use forward/backward to move and inverse it
 		yvalue = -stick.GetY();
+
 		//Toggle system for drive inversion
 		if(xbox.GetRawButton(5)&&xbox.GetRawButton(6)&&!toggle)	//Button pressed and latch not active
 		{
@@ -261,34 +265,35 @@ private:
 		}
 
 
-		if(stick.GetRawButton(11)&&!work)
+		if(stick.GetRawButton(12)&&!work)
 		{
 			speed=speed+.1;
 			work=true;
 		}
-		else if(stick.GetRawButton(12)&&!work)
+		else if(stick.GetRawButton(10)&&!work)
 		{
 			speed=speed+.01;
 			work=true;
 		}
-		else if(stick.GetRawButton(9)&&!work)
+		else if(stick.GetRawButton(11)&&!work)
 		{
 			speed=speed-.1;
 			work=true;
 		}
-		else if (stick.GetRawButton(10)&&!work)
+		else if (stick.GetRawButton(9)&&!work)
 		{
 			speed=speed-.01;
 			work=true;
 		}
-		else if(stick.GetRawButton(7)&&!work)//insert below
+		else if(stick.GetRawButton(8)&&!work)//insert below
 		{
 			speed=speed+.001;
 			work=true;
 		}
-		else if(stick.GetRawButton(8)&&!work)//insert below
+		else if(stick.GetRawButton(7)&&!work)//insert below
 		{
 			speed=speed-.001;
+			work=true;
 		}
 		else if(!stick.GetRawButton(7)&&!stick.GetRawButton(8)&&!stick.GetRawButton(11)&&!stick.GetRawButton(12)&&!stick.GetRawButton(9)&&!stick.GetRawButton(10)&&work)
 		{
@@ -318,31 +323,29 @@ private:
 			launcherl.Set(0);
 			launcherr.Set(0);
 		}
-		//Push->Pull in ball
-		if(xbox.GetRawButton(1))
+
+		if(xbox.GetRawButton(2))
 		{
-			//Pull ball
 			intake.Set(1.0);
+
 		}
-		//Push->Push out ball
-		else if(xbox.GetRawButton(2))
+		else if(xbox.GetRawButton(1))
 		{
-			//Push Ball
-			intake.Set(-1);
+			intake.Set(-1.0);
 		}
-		//neither are pressed
 		else
 		{
 			//Stop intake
 			intake.Set(0);
 		}
 		//Testing values
+		turnspeed=stick.GetRawAxis(3);
+		turnspeed=turnspeed+1;
+		turnspeed=turnspeed*1.5;
+		turnspeed=turnspeed+1;
+		xvalue=xvalue/turnspeed;
 		//gyrorate= gyro.GetAngle();
-		if(stick.GetRawButton(4))
-		{
-			xvalue = -stick.GetZ();
-			xvalue=xvalue/4;
-		}
+
 		myRobot.ArcadeDrive(yvalue,xvalue);		//Robot Drive
 
 		//Display values
@@ -351,7 +354,7 @@ private:
 		//SmartDashboard::PutNumber("Gyro Rate",gyro.GetRate());
 		SmartDashboard::PutNumber("Throttle",speed);
 		SmartDashboard::PutBoolean("latch",latch);
-		SmartDashboard::PutNumber("Button",stick.GetRawButton(5));
+		SmartDashboard::PutNumber("Button",turnspeed);
 		//myRobot.ArcadeDrive(stick); // drive with arcade style (use right stick)
 	}
 
@@ -362,3 +365,4 @@ private:
 	}
 };
 
+START_ROBOT_CLASS(Robot);
